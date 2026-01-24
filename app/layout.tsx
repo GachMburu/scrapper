@@ -10,23 +10,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Data - Marketplace for Datasets",
-  description: "Browse, purchase, and manage high-quality verified datasets. Build your data pipeline with ease.",
-  keywords: "datasets, data marketplace, data for sale, verified data",
-  authors: [{ name: "Data Team" }],
-  creator: "Data",
-  openGraph: {
-    title: "Data - Marketplace for Datasets",
-    description: "Browse, purchase, and manage high-quality verified datasets.",
-    url: "https://data.example.com",
-    siteName: "Data",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Data - Marketplace for Datasets",
-    description: "Browse, purchase, and manage high-quality verified datasets.",
-  },
+  title: "Data",
+  description: "Browse, purchase, and manage high-quality verified datasets.e.",
 };
 
 export default function RootLayout({
