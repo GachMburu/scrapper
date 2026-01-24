@@ -31,24 +31,30 @@ export async function scrapeUrl(url: string): Promise<ScrapedResult> {
       const rows: any[] = [];
       
       // Try to find headers
-      $(table).find('th').each((_, th) => {
+      $(table).find('th').each((_: number, th: any) => {
         headers.push($(th).text().trim() || `Col ${headers.length + 1}`);
+        return true;
       });
       // Fallback if no TH
       if (headers.length === 0) {
-        $(table).find('tr').first().find('td').each((_, td) => headers.push(`Col ${headers.length + 1}`));
+        $(table).find('tr').first().find('td').each((_: number, td: any) => {
+          headers.push(`Col ${headers.length + 1}`);
+          return true;
+        });
       }
 
-      $(table).find('tr').each((_, tr) => {
+      $(table).find('tr').each((_: number, tr: any) => {
         const rowObj: any = {};
         let hasData = false;
-        $(tr).find('td').each((colIndex, td) => {
+        $(tr).find('td').each((colIndex: number, td: any) => {
           const key = headers[colIndex] || `Col ${colIndex}`;
           const val = $(td).text().trim();
           if (val) hasData = true;
           rowObj[key] = val;
+          return true;
         });
         if (hasData) rows.push(rowObj);
+        return true;
       });
 
       if (rows.length > 0) components.push({ type: 'table', title: `Table ${i + 1}`, headers, rows, count: rows.length });
@@ -56,12 +62,13 @@ export async function scrapeUrl(url: string): Promise<ScrapedResult> {
 
     // 2. EXTRACT LINKS
     const links: any[] = [];
-    $('a').each((_, el) => {
+    $('a').each((_: number, el: any) => {
       const text = $(el).text().trim();
       const href = $(el).attr('href');
       if (text && href && !href.startsWith('#') && !href.startsWith('javascript')) {
         links.push({ "Link Text": text, "URL": href });
       }
+      return true;
     });
     if (links.length > 0) components.push({ type: 'links', title: 'All Links', headers: ['Link Text', 'URL'], rows: links, count: links.length });
 
