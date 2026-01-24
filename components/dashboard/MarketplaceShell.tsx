@@ -120,7 +120,7 @@ export default function MarketplaceShell({ initialDatasets }: MarketplaceShellPr
 
         {/* Content */}
         <div className="p-6 max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Marketplace</h1>
+          <h1 className="text-3xl font-bold mb-8">Funding Data</h1>
 
           <AnimatePresence mode="wait">
             {filteredDatasets.length === 0 ? (
