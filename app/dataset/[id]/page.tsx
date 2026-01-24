@@ -1,90 +1,164 @@
 import { connectToDatabase } from '@/lib/db';
 import { Dataset } from '@/lib/models/Dataset';
 import { DataRow } from '@/lib/models/DataRow';
-import { Lock, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Download, Database } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import mongoose from 'mongoose';
+import LockOverlay from '@/components/LockOverlay';
+import EmailDelivery from '@/components/EmailDelivery';
 
-export default async function DatasetPage({ params }: { params: { id: string } }) {
+export default async function DatasetPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ paid?: string }>;
+}) {
   await connectToDatabase();
 
-  const datasetId = new mongoose.Types.ObjectId(params.id);
-  
+  const { id } = await params;
+  const { paid } = await searchParams;
+
+  const datasetId = new mongoose.Types.ObjectId(id);
+  const isPaid = paid === 'true';
+
   const dataset = await Dataset.findById(datasetId);
-  const items = await DataRow.find({ datasetId: datasetId });
+  const items = await DataRow.find({ datasetId });
 
   if (!dataset) return notFound();
 
-  // Freemium Logic: Top 3 are free
-  const freeRows = items.slice(0, 3);
   const totalRows = items.length;
-  const lockedCount = totalRows - 3;
-  
-  // Extract headers from the first item (assuming consistency)
-  const headers = freeRows.length > 0 ? Object.keys(freeRows[0].content as object) : [];
+
+  const displayRows = isPaid ? items : items.slice(0, 3);
+  const lockedCount = Math.max(totalRows - 3, 0);
+
+  const headers =
+    displayRows.length > 0
+      ? Object.keys(displayRows[0].content as object)
+      : [];
+
+  const dummyRowCount = !isPaid ? 5 : 0;
 
   return (
-    <div className="min-h-screen bg-slate-200">
-      {/* Header */}
-      <div className="bg-white border-b border-slate-300 py-12">
-        <div className="max-w-5xl mx-auto px-4">
-          <Link href="/" className="text-sky-600 hover:underline mb-4 inline-block">&larr; Back to Marketplace</Link>
-          <h1 className="text-4xl font-extrabold text-slate-900 mb-2">{dataset.name}</h1>
-          <p className="text-slate-500 text-lg">{totalRows} Records Available</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        {/* Top navigation */}
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-sky-600 transition mb-8"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to marketplace
+        </Link>
 
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        
-        {/* Data Table Container */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-300 relative">
-          
-          {/* Table */}
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-xs tracking-wider">
-              <tr>
-                {headers.map(h => <th key={h} className="px-6 py-4">{h}</th>)}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {/* Render Free Rows */}
-              {freeRows.map((row) => (
-                <tr key={row._id?.toString()} className="hover:bg-primary-50 transition-colors">
+        {/* Dataset header */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 mb-2">
+                {dataset.name}
+              </h1>
+
+              <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
+                <span className="inline-flex items-center gap-1.5">
+                  <Database className="w-4 h-4 text-slate-400" />
+                  {totalRows} records
+                </span>
+                <span className="font-semibold text-slate-700">
+                  ${dataset.price}
+                </span>
+              </div>
+            </div>
+
+            {isPaid && (
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-50 text-sky-700 font-semibold text-sm">
+                <CheckCircle2 className="w-4 h-4" />
+                Full access unlocked
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        {isPaid && (
+          <div className="flex flex-wrap gap-3 mb-6">
+            <button
+              className="
+                inline-flex items-center gap-2
+                px-5 py-2.5 rounded-lg
+                bg-white border border-slate-200
+                text-slate-700 font-semibold
+                hover:border-sky-400 hover:text-sky-600
+                transition shadow-sm
+              "
+            >
+              <Download className="w-4 h-4" />
+              Download CSV
+            </button>
+
+            <EmailDelivery datasetId={id} />
+          </div>
+        )}
+
+        {/* Data table */}
+        <div className="relative bg-white border border-slate-200 rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead className="bg-slate-100 border-b border-slate-200">
+                <tr>
                   {headers.map((h) => (
-                    <td key={h} className="px-6 py-4 text-slate-700 font-medium">
-                      {String((row.content as any)[h] || '')}
-                    </td>
+                    <th
+                      key={h}
+                      className="px-6 py-4 text-left font-semibold text-slate-700 uppercase tracking-wide text-xs"
+                    >
+                      {h}
+                    </th>
                   ))}
                 </tr>
-              ))}
+              </thead>
 
-              {/* Render Blurred Dummy Rows (Visual Trick) */}
-              {[...Array(5)].map((_, i) => (
-                <tr key={`dummy-${i}`} className="filter blur-sm select-none bg-slate-50 opacity-50">
-                   {headers.map((h) => (
-                    <td key={h} className="px-6 py-4">LOCKED DATA content</td>
-                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              <tbody className="divide-y divide-slate-100">
+                {displayRows.map((row) => (
+                  <tr
+                    key={row._id?.toString()}
+                    className="hover:bg-sky-50 transition"
+                  >
+                    {headers.map((h) => (
+                      <td
+                        key={h}
+                        className="px-6 py-4 text-slate-700 font-medium"
+                      >
+                        {String((row.content as any)[h] ?? '')}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
 
-          {/* The Paywall Overlay */}
-          <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-white via-white/90 to-transparent flex flex-col items-center justify-center pt-20">
-            <Lock className="w-12 h-12 text-sky-600 mb-4" />
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">Unlock {lockedCount} More Records</h3>
-            <p className="text-slate-600 mb-6 text-center max-w-md">
-              Get full access to the complete dataset including all data points and details.
-            </p>
-            <button className="bg-sky-600 hover:bg-sky-700 text-white text-lg font-bold py-3 px-8 rounded-full shadow-lg shadow-sky-500/30 transition transform hover:scale-105 active:scale-95">
-              Buy Full Access for ${dataset.price}
-            </button>
-            <p className="mt-4 text-sm text-slate-400 flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> Instant Email Delivery
-            </p>
+                {!isPaid &&
+                  Array.from({ length: dummyRowCount }).map((_, i) => (
+                    <tr
+                      key={`dummy-${i}`}
+                      className="bg-slate-50 text-slate-400 blur-sm select-none"
+                    >
+                      {headers.map((h) => (
+                        <td key={h} className="px-6 py-4">
+                          ●●●●●●●●●
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           </div>
 
+          {!isPaid && (
+            <LockOverlay
+              lockedCount={lockedCount}
+              price={dataset.price}
+              datasetId={id}
+            />
+          )}
         </div>
       </div>
     </div>

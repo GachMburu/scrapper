@@ -2,13 +2,13 @@
 
 @layer base {
   body {
-    @apply bg-base text-text-primary antialiased min-h-screen font-sans;
+    @apply bg-slate-50 text-slate-900 antialiased min-h-screen font-sans;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-bold tracking-tight font-sans text-text-primary;
+    @apply font-bold tracking-tight font-sans text-slate-900;
   }
-  p, span, label, input, textarea, button {
-    @apply font-sans text-text-secondary;
+  p, span, label {
+    @apply font-sans text-slate-700;
   }
 }
 
