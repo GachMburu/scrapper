@@ -21,7 +21,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       sessionStorage.setItem('admin_auth', 'true');
       setIsAuthorized(true);
     } else {
-      alert('Incorrect Passcode');
+      alert('Incorrect Password!');
     }
   };
 
@@ -32,7 +32,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <h2 className="text-2xl font-bold text-slate-800 mb-4">Admin Access</h2>
           <input 
             type="password" 
-            placeholder="Enter Passcode"
+            placeholder="Enter Password"
             className="w-full p-2 border border-slate-300 rounded mb-4"
             value={inputCode}
             onChange={(e) => setInputCode(e.target.value)}

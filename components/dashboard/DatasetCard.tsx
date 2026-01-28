@@ -6,9 +6,10 @@ import { ArrowRight, FileText, CheckCircle2, TableProperties, Edit, Eye, Downloa
 
 interface DatasetCardProps {
   data: any;
+  onCheckout?: () => void;
 }
 
-export default function DatasetCard({ data }: DatasetCardProps) {
+export default function DatasetCard({ data, onCheckout }: DatasetCardProps) {
   // Mock Row Count if not present in DB yet (for visual consistency)
   const rowCount = data.items?.length || Math.floor(Math.random() * 500) + 50;
   
@@ -75,7 +76,12 @@ export default function DatasetCard({ data }: DatasetCardProps) {
         <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-50 text-green-700 border border-green-200 text-xs font-semibold">
           ✅ Published
         </span>
-        <span className="font-bold text-sky-600 text-lg">${data.price}</span>
+        <button
+          onClick={onCheckout}
+          className="font-bold text-sky-600 text-lg hover:text-sky-700 transition"
+        >
+          ${data.price}
+        </button>
       </div>
     </motion.div>
   );

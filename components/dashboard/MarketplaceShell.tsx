@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Menu, Grid, List } from 'lucide-react';
 import Sidebar from './Sidebar';
 import DatasetCard from './DatasetCard';
+import CheckoutModal from '../CheckoutModal';
 import Link from 'next/link';
 
 interface MarketplaceShellProps {
@@ -16,6 +17,12 @@ export default function MarketplaceShell({ initialDatasets }: MarketplaceShellPr
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [checkoutModal, setCheckoutModal] = useState<{ isOpen: boolean; datasetId: string; datasetName: string; price: number }>({
+    isOpen: false,
+    datasetId: '',
+    datasetName: '',
+    price: 0,
+  });
   const [priceRange, setPriceRange] = useState('all');
 
   const categories = ['All', 'Finance', 'Tech', 'Real Estate', 'Healthcare', 'E-commerce'];
@@ -139,7 +146,16 @@ export default function MarketplaceShell({ initialDatasets }: MarketplaceShellPr
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
               >
                 {filteredDatasets.map(d => (
-                  <DatasetCard key={d._id} data={d} />
+                  <DatasetCard 
+                    key={d._id} 
+                    data={d}
+                    onCheckout={() => setCheckoutModal({
+                      isOpen: true,
+                      datasetId: d._id,
+                      datasetName: d.name,
+                      price: d.price,
+                    })}
+                  />
                 ))}
               </motion.div>
             ) : (
@@ -155,6 +171,14 @@ export default function MarketplaceShell({ initialDatasets }: MarketplaceShellPr
                       <h3 className="font-semibold">{d.name}</h3>
                       <p className="text-sm text-slate-600 line-clamp-2">
                         {d.description || 'Verified dataset'}
+
+      <CheckoutModal
+        isOpen={checkoutModal.isOpen}
+        datasetId={checkoutModal.datasetId}
+        datasetName={checkoutModal.datasetName}
+        price={checkoutModal.price}
+        onClose={() => setCheckoutModal({ ...checkoutModal, isOpen: false })}
+      />
                       </p>
                     </div>
                   </Link>

@@ -1,27 +1,22 @@
 import { connectToDatabase } from '@/lib/db';
 import { Dataset } from '@/lib/models/Dataset';
 import { DataRow } from '@/lib/models/DataRow';
-import { ArrowLeft, CheckCircle2, Download, Database } from 'lucide-react';
+import { ArrowLeft, Download, Database } from 'lucide-react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import mongoose from 'mongoose';
-import LockOverlay from '@/components/LockOverlay';
 import EmailDelivery from '@/components/EmailDelivery';
 
 export default async function DatasetPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ paid?: string }>;
 }) {
   await connectToDatabase();
 
   const { id } = await params;
-  const { paid } = await searchParams;
 
   const datasetId = new mongoose.Types.ObjectId(id);
-  const isPaid = paid === 'true';
 
   const dataset = await Dataset.findById(datasetId);
   const items = await DataRow.find({ datasetId });
@@ -30,15 +25,10 @@ export default async function DatasetPage({
 
   const totalRows = items.length;
 
-  const displayRows = isPaid ? items : items.slice(0, 3);
-  const lockedCount = Math.max(totalRows - 3, 0);
-
   const headers =
-    displayRows.length > 0
-      ? Object.keys(displayRows[0].content as object)
+    items.length > 0
+      ? Object.keys(items[0].content as object)
       : [];
-
-  const dummyRowCount = !isPaid ? 5 : 0;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -70,36 +60,27 @@ export default async function DatasetPage({
                 </span>
               </div>
             </div>
-
-            {isPaid && (
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-50 text-sky-700 font-semibold text-sm">
-                <CheckCircle2 className="w-4 h-4" />
-                Full access unlocked
-              </div>
-            )}
           </div>
         </div>
 
         {/* Actions */}
-        {isPaid && (
-          <div className="flex flex-wrap gap-3 mb-6">
-            <button
-              className="
-                inline-flex items-center gap-2
-                px-5 py-2.5 rounded-lg
-                bg-white border border-slate-200
-                text-slate-700 font-semibold
-                hover:border-sky-400 hover:text-sky-600
-                transition shadow-sm
-              "
-            >
-              <Download className="w-4 h-4" />
-              Download CSV
-            </button>
+        <div className="flex flex-wrap gap-3 mb-6">
+          <button
+            className="
+              inline-flex items-center gap-2
+              px-5 py-2.5 rounded-lg
+              bg-white border border-slate-200
+              text-slate-700 font-semibold
+              hover:border-sky-400 hover:text-sky-600
+              transition shadow-sm
+            "
+          >
+            <Download className="w-4 h-4" />
+            Download CSV
+          </button>
 
-            <EmailDelivery datasetId={id} />
-          </div>
-        )}
+          <EmailDelivery datasetId={id} />
+        </div>
 
         {/* Data table */}
         <div className="relative bg-white border border-slate-200 rounded-2xl overflow-hidden">
@@ -119,7 +100,7 @@ export default async function DatasetPage({
               </thead>
 
               <tbody className="divide-y divide-slate-100">
-                {displayRows.map((row) => (
+                {items.map((row) => (
                   <tr
                     key={row._id?.toString()}
                     className="hover:bg-sky-50 transition"
@@ -134,31 +115,9 @@ export default async function DatasetPage({
                     ))}
                   </tr>
                 ))}
-
-                {!isPaid &&
-                  Array.from({ length: dummyRowCount }).map((_, i) => (
-                    <tr
-                      key={`dummy-${i}`}
-                      className="bg-slate-50 text-slate-400 blur-sm select-none"
-                    >
-                      {headers.map((h) => (
-                        <td key={h} className="px-6 py-4">
-                          ●●●●●●●●●
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
               </tbody>
             </table>
           </div>
-
-          {!isPaid && (
-            <LockOverlay
-              lockedCount={lockedCount}
-              price={dataset.price}
-              datasetId={id}
-            />
-          )}
         </div>
       </div>
     </div>
